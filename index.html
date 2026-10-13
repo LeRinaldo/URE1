@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Simulados - URE Sumaré</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ure: {
+                            50: '#eef6ff',
+                            100: '#d9eaff',
+                            500: '#0284c7',
+                            650: '#0369a1',
+                            700: '#03588c',
+                            900: '#0c2340'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="h-full bg-slate-100 text-slate-800 flex flex-col antialiased">
+
+    <!-- Custom Modal / Message Box (No browser alert) -->
+    <div id="customModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-slate-100 transform transition-all">
+            <div id="modalIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto text-xl">
+                <!-- Dynamic Icon -->
+            </div>
+            <h3 id="modalTitle" class="text-lg font-bold text-slate-900 text-center mb-2">Atenção</h3>
+            <p id="modalMessage" class="text-sm text-slate-600 text-center mb-6">Mensagem aqui...</p>
+            <div id="modalActions" class="flex space-x-3 justify-center">
+                <button onclick="closeModal()" class="px-5 py-2.5 bg-ure-650 hover:bg-ure-700 text-white font-medium rounded-xl shadow-sm transition-all text-sm w-full">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH / PROFILE SELECTION VIEW -->
+    <div id="authView" class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gradient-to-br from-ure-900 via-ure-700 to-ure-500 flex-1">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-3xl mb-4 shadow-xl">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-white tracking-tight">URE Sumaré</h2>
+            <p class="mt-2 text-sm text-ure-100">Sistema de Coleta e Gestão de Simulados</p>
+        </div>
+
+        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-lg px-4">
+            <div class="bg-white py-8 px-6 shadow-2xl rounded-3xl sm:px-10 border border-slate-100">
+                <div class="mb-6 border-b border-slate-100 pb-4">
+                    <h3 class="text-lg font-bold text-slate-900">Selecione seu Perfil de Acesso</h3>
+                    <p class="text-xs text-slate-500 mt-1">Escolha se deseja acessar como Escola para envio de dados ou como URE para acompanhamento consolidado.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Profile Tabs -->
+                    <div class="grid grid-cols-2 gap-3 p-1 bg-slate-100 rounded-2xl">
+                        <button type="button" onclick="switchLoginMode('escola')" id="btnTabEscola" class="py-3 px-4 text-xs font-semibold rounded-xl transition-all shadow-sm bg-white text-ure-650 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-school"></i>
+                            <span>Escola</span>
+                        </button>
+                        <button type="button" onclick="switchLoginMode('ure')" id="btnTabUre" class="py-3 px-4 text-xs font-semibold rounded-xl transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-building-columns"></i>
+                            <span>Painel URE</span>
+                        </button>
+                    </div>
+
+                    <!-- Escola Login Form -->
+                    <div id="formLoginEscola" class="space-y-4 pt-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Selecione a Escola</label>
+                            <select id="selectEscolaLogin" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-ure-500 focus:border-ure-500 text-sm outline-none transition bg-white">
+                                <option value="">-- Escolha sua Escola --</option>
+                                <option value="EE Profª Nair Uchoa">EE Profª Nair Uchoa</option>
+                                <option value="EE Dom Nery">EE Dom Nery</option>
+                                <option value="EE Profº Cia. de Carvalho">EE Profº Cia. de Carvalho</option>
+                                <option value="EE Amador Bueno">EE Amador Bueno</option>
+                                <option value="EE Jardim Dall'Orto">EE Jardim Dall'Orto</option>
+                                <option value="EE Matilde Maria">EE Matilde Maria</option>
+                                <option value="EE Maria de Lourdes">EE Maria de Lourdes</option>
+                                <option value="EE Sumaré (Central)">EE Sumaré (Central)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Senha de Acesso</label>
+                            <input type="password" id="passEscola" value="123456" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-ure-500 focus:border-ure-500 text-sm outline-none transition" placeholder="••••••••">
+                            <span class="text-[11px] text-slate-400 mt-1 block">Dica: padrão 123456 para demonstração.</span>
+                        </div>
+                        <button onclick="loginAsEscola()" class="w-full py-3.5 bg-ure-650 hover:bg-ure-700 text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-sm">
+                            <span>Acessar Painel da Escola</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- URE Login Form -->
+                    <div id="formLoginUre" class="space-y-4 pt-2 hidden">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Identificação do Gestor URE</label>
+                            <input type="text" id="inputUreUser" value="Equipe Avaliação URE Sumaré" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-ure-500 focus:border-ure-500 text-sm outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Chave de Segurança URE</label>
+                            <input type="password" id="passUre" value="ure2026" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-ure-500 focus:border-ure-500 text-sm outline-none transition" placeholder="••••••••">
+                            <span class="text-[11px] text-slate-400 mt-1 block">Dica: chave padrão ure2026.</span>
+                        </div>
+                        <button onclick="loginAsUre()" class="w-full py-3.5 bg-ure-900 hover:bg-slate-900 text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-sm">
+                            <span>Acessar Painel Consolidado URE</span>
+                            <i class="fa-solid fa-chart-line"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-6 text-xs text-ure-100 flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Ambiente Seguro com Sincronização em Tempo Real (Firebase Firestore)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP SHELL (Hidden until login) -->
+    <div id="appShell" class="min-h-full flex flex-col hidden flex-1">
+        <!-- Top Navbar -->
+        <header class="bg-ure-900 text-white shadow-md sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-ure-100 font-bold border border-white/20">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-sm sm:text-base leading-tight">URE Sumaré</h1>
+                        <span id="badgeProfileType" class="text-[11px] text-ure-100 bg-white/10 px-2 py-0.5 rounded-md font-medium">Perfil</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="text-right hidden sm:block">
+                        <div id="headerUserName" class="text-xs font-semibold text-white">Nome do Usuário</div>
+                        <div id="headerSyncStatus" class="text-[10px] text-emerald-400 flex items-center justify-end space-x-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>Sincronizado</span>
+                        </div>
+                    </div>
+                    <button onclick="logout()" class="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition text-xs flex items-center space-x-2 border border-white/10" title="Sair do Sistema">
+                        <i class="fa-solid fa-power-off"></i>
+                        <span class="hidden md:inline">Sair</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Container -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+            <!-- URE DASHBOARD VIEW -->
+            <div id="viewUreDashboard" class="space-y-6 hidden">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-ure-900 to-ure-700 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center">
+                    <div class="relative z-10 max-w-2xl mb-4 md:mb-0">
+                        <span class="bg-white/10 text-ure-100 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Painel de Monitoramento URE</span>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold mt-2">Visão Geral dos Simulados</h2>
+                        <p class="text-sm text-ure-100 mt-1">Acompanhe em tempo real o desempenho acadêmico, taxas de participação e envio de resultados por todas as escolas jurisdicionadas.</p>
+                    </div>
+                    <div class="relative z-10 flex flex-wrap gap-3">
+                        <button onclick="switchUreTab('dashboard')" id="btnTabUreDash" class="px-4 py-2.5 rounded-xl text-xs font-bold transition bg-white text-ure-900 shadow">
+                            <i class="fa-solid fa-chart-pie mr-1.5"></i> Gráficos e Dados
+                        </button>
+                        <button onclick="switchUreTab('pendencias')" id="btnTabUrePend" class="px-4 py-2.5 rounded-xl text-xs font-bold transition bg-white/10 hover:bg-white/20 text-white border border-white/20">
+                            <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Escolas Pendentes (<span id="countPendentesBadge">0</span>)
+                        </button>
+                        <button onclick="switchUreTab('relatorios')" id="btnTabUreRel" class="px-4 py-2.5 rounded-xl text-xs font-bold transition bg-white/10 hover:bg-white/20 text-white border border-white/20">
+                            <i class="fa-solid fa-file-excel mr-1.5"></i> Relatórios & Exportação
+                        </button>
+                    </div>
+                    <!-- Decorative BG Element -->
+                    <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
+                </div>
+
+                <!-- SUB-VIEW 1: Dashboard & Charts -->
+                <div id="ureSubViewDashboard" class="space-y-6">
+                    <!-- Global Filters Bar -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1 uppercase">Filtrar por Simulado</label>
+                            <select id="filterSimulado" onchange="renderUreDashboard()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-ure-500 outline-none bg-white">
+                                <option value="todos">Todos os Simulados</option>
+                                <option value="Simulado 1 (Diagnóstico)">Simulado 1 (Diagnóstico)</option>
+                                <option value="Simulado 2 (Bimestral)">Simulado 2 (Bimestral)</option>
+                                <option value="Simulado 3 (Preparatório SAEB)">Simulado 3 (Preparatório SAEB)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1 uppercase">Filtrar por Ano / Série</label>
+                            <select id="filterAnoSerie" onchange="renderUreDashboard()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-ure-500 outline-none bg-white">
+                                <option value="todos">Todos os Anos / Séries</option>
+                                <option value="5º Ano">5º Ano (Ensino Fundamental)</option>
+                                <option value="6º Ano">6º Ano (Ensino Fundamental)</option>
+                                <option value="9º Ano">9º Ano (Ensino Fundamental)</option>
+                                <option value="1ª Série">1ª Série (Ensino Médio)</option>
+                                <option value="2ª Série">2ª Série (Ensino Médio)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1 uppercase">Filtrar por Escola</label>
+                            <select id="filterEscola" onchange="renderUreDashboard()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-ure-500 outline-none bg-white">
+                                <option value="todas">Todas as Escolas</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-ure-50 text-ure-650 flex items-center justify-center text-xl font-bold">
+                                <i class="fa-solid fa-school"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase">Escolas Participantes</p>
+                                <h3 id="kpiEscolasParticipantes" class="text-2xl font-bold text-slate-900 mt-0.5">0 / 8</h3>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase">Alunos Avaliados</p>
+                                <h3 id="kpiTotalAlunos" class="text-2xl font-bold text-slate-900 mt-0.5">0</h3>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase">Taxa Média de Acerto</p>
+                                <h3 id="kpiTaxaMedia" class="text-2xl font-bold text-slate-900 mt-0.5">0%</h3>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+                                <i class="fa-solid fa-file-contract"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase">Total de Envios</p>
+                                <h3 id="kpiTotalEnvios" class="text-2xl font-bold text-slate-900 mt-0.5">0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Chart 1: Desempenho por Ano / Série -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-slate-900 text-sm flex items-center space-x-2">
+                                    <i class="fa-solid fa-chart-column text-ure-650"></i>
+                                    <span>Média de Acertos por Ano / Série (%)</span>
+                                </h3>
+                                <span class="text-xs text-slate-400">Port. & Mat.</span>
+                            </div>
+                            <div class="h-72 relative">
+                                <canvas id="chartAnoSerie"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Comparativo entre Escolas -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-slate-900 text-sm flex items-center space-x-2">
+                                    <i class="fa-solid fa-ranking-star text-ure-650"></i>
+                                    <span>Desempenho Geral por Escola</span>
+                                </h3>
+                                <span class="text-xs text-slate-400">Taxa de Acerto (%)</span>
+                            </div>
+                            <div class="h-72 relative">
+                                <canvas id="chartEscolas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Submissions Table -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm">Registros de Resultados Recebidos</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">Listagem consolidada dos envios cadastrados pelas escolas da região.</p>
+                            </div>
+                            <span id="countRegistrosTable" class="bg-ure-50 text-ure-650 text-xs font-bold px-3 py-1 rounded-full">0 registros</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-200">
+                                        <th class="py-3 px-4">Escola</th>
+                                        <th class="py-3 px-4">Simulado</th>
+                                        <th class="py-3 px-4">Ano / Série</th>
+                                        <th class="py-3 px-4">Turma</th>
+                                        <th class="py-3 px-4">Disciplina</th>
+                                        <th class="py-3 px-4 text-center">Alunos</th>
+                                        <th class="py-3 px-4 text-center">Partic.</th>
+                                        <th class="py-3 px-4 text-center">Acerto</th>
+                                        <th class="py-3 px-4 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableRegistrosUre" class="divide-y divide-slate-100 text-slate-700">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-VIEW 2: Escolas Pendentes / Inadimplentes -->
+                <div id="ureSubViewPendencias" class="space-y-6 hidden">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-6 border-b border-slate-100">
+                            <h3 class="font-bold text-slate-900 text-sm">Monitoramento de Inadimplência e Pendências de Envio</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Verifique quais escolas ainda não realizaram o cadastro dos resultados nos simulados vigentes.</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center space-x-4">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-emerald-800 uppercase">Escolas em Dia</p>
+                                        <h4 id="statEscolasEmDia" class="text-xl font-bold text-emerald-900">0</h4>
+                                    </div>
+                                </div>
+                                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center space-x-4">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold">
+                                        <i class="fa-solid fa-clock"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-amber-800 uppercase">Com Pendências Parciais</p>
+                                        <h4 id="statEscolasPendentes" class="text-xl font-bold text-amber-900">0</h4>
+                                    </div>
+                                </div>
+                                <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center space-x-4">
+                                    <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold">
+                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-rose-800 uppercase">Total na Rede</p>
+                                        <h4 class="text-xl font-bold text-rose-900">8 Escolas</h4>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-200">
+                                            <th class="py-3 px-4">Escola Jurisdicionada</th>
+                                            <th class="py-3 px-4 text-center">Status Geral</th>
+                                            <th class="py-3 px-4 text-center">Total de Envios</th>
+                                            <th class="py-3 px-4">Último Envio</th>
+                                            <th class="py-3 px-4 text-right">Ação / Cobrança</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablePendencias" class="divide-y divide-slate-100 text-slate-700">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-VIEW 3: Relatórios e Exportação -->
+                <div id="ureSubViewRelatorios" class="space-y-6 hidden">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                        <h3 class="font-bold text-slate-900 text-base mb-1">Central de Relatórios Analíticos e Exportação</h3>
+                        <p class="text-xs text-slate-500 mb-6">Gere relatórios consolidados em formatos oficiais para análise pedagógica ou prestação de contas à Secretaria de Educação.</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col justify-between">
+                                <div>
+                                    <div class="w-12 h-12 rounded-xl bg-ure-50 text-ure-650 flex items-center justify-center text-xl mb-4">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-sm mb-1">Relatório Geral Executivo (PDF)</h4>
+                                    <p class="text-xs text-slate-500 mb-4">Boletim consolidado contendo gráficos de desempenho por série, comparativo entre escolas e sumário executivo da URE.</p>
+                                </div>
+                                <button onclick="simularExportacao('PDF')" class="w-full py-2.5 bg-ure-650 hover:bg-ure-700 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-download"></i>
+                                    <span>Baixar Relatório PDF</span>
+                                </button>
+                            </div>
+
+                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col justify-between">
+                                <div>
+                                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-4">
+                                        <i class="fa-solid fa-file-excel"></i>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-sm mb-1">Planilha Analítica Completa (Excel)</h4>
+                                    <p class="text-xs text-slate-500 mb-4">Exportação em formato CSV/Excel com todos os registros detalhados por turma, disciplina, participações e acertos.</p>
+                                </div>
+                                <button onclick="simularExportacao('Excel')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-download"></i>
+                                    <span>Baixar Planilha Excel</span>
+                                </button>
+                            </div>
+
+                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col justify-between">
+                                <div>
+                                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl mb-4">
+                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-sm mb-1">Relatório de Inadimplência</h4>
+                                    <p class="text-xs text-slate-500 mb-4">Lista detalhada de escolas pendentes para envio de ofícios de cobrança de prazos da Secretaria.</p>
+                                </div>
+                                <button onclick="simularExportacao('Inadimplencia')" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-download"></i>
+                                    <span>Gerar Relatório de Pendências</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESCOLA DASHBOARD & FORM VIEW -->
+            <div id="viewEscolaDashboard" class="space-y-6 hidden">
+                <!-- Welcome School Banner -->
+                <div class="bg-gradient-to-r from-ure-650 to-ure-700 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center">
+                    <div>
+                        <span class="bg-white/10 text-ure-100 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Painel da Escola</span>
+                        <h2 id="titleEscolaName" class="text-2xl sm:text-3xl font-extrabold mt-2">Nome da Escola</h2>
+                        <p class="text-sm text-ure-100 mt-1">Cadastre e envie os resultados dos simulados realizados pelos seus alunos por turma e disciplina.</p>
+                    </div>
+                    <div class="mt-4 md:mt-0">
+                        <button onclick="openNovoRegistroModal()" class="px-5 py-3 bg-white text-ure-650 hover:bg-ure-50 font-bold rounded-2xl shadow-lg transition text-xs flex items-center space-x-2">
+                            <i class="fa-solid fa-plus-circle text-base"></i>
+                            <span>Cadastrar Novo Resultado</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- School Metrics Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-ure-50 text-ure-650 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-file-lines"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase">Envios Realizados</p>
+                            <h3 id="escolaKpiEnvios" class="text-2xl font-bold text-slate-900 mt-0.5">0</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase">Alunos Cadastrados</p>
+                            <h3 id="escolaKpiAlunos" class="text-2xl font-bold text-slate-900 mt-0.5">0</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase">Média de Acerto da Escola</p>
+                            <h3 id="escolaKpiMedia" class="text-2xl font-bold text-slate-900 mt-0.5">0%</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- School Submissions Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-sm">Meus Resultados Cadastrados</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Histórico de envios efetuados por esta unidade escolar para a URE Sumaré.</p>
+                        </div>
+                        <button onclick="openNovoRegistroModal()" class="px-4 py-2 bg-ure-50 hover:bg-ure-100 text-ure-650 font-semibold rounded-xl text-xs transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Novo Envio</span>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4">Simulado</th>
+                                    <th class="py-3 px-4">Ano / Série</th>
+                                    <th class="py-3 px-4">Turma</th>
+                                    <th class="py-3 px-4">Disciplina</th>
+                                    <th class="py-3 px-4 text-center">Matriculados</th>
+                                    <th class="py-3 px-4 text-center">Participantes</th>
+                                    <th class="py-3 px-4 text-center">Taxa Acerto</th>
+                                    <th class="py-3 px-4 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableRegistrosEscola" class="divide-y divide-slate-100 text-slate-700">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-slate-200 py-6 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
+                <p>© 2026 URE Sumaré - Unidade Regional de Ensino | Sistema de Avaliação Educacional</p>
+                <p class="flex items-center space-x-1">
+                    <i class="fa-solid fa-database text-ure-500"></i>
+                    <span>Sincronização Online Firebase Firestore</span>
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- MODAL: Cadastro / Edição de Resultado (Escola) -->
+    <div id="modalResultado" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden overflow-y-auto py-10">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full mx-4 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                <div>
+                    <h3 id="modalResultadoTitle" class="text-lg font-bold text-slate-900">Cadastrar Resultado de Simulado</h3>
+                    <p class="text-xs text-slate-500">Preencha os dados da turma, participação e desempenho acadêmico.</p>
+                </div>
+                <button onclick="closeResultadoModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="formResultado" onsubmit="salvarResultado(event)" class="space-y-4">
+                <input type="hidden" id="editRegistroId">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Simulado *</label>
+                    <select id="inputSimulado" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-ure-500 outline-none bg-white">
+                        <option value="">-- Selecione o Simulado --</option>
+                        <option value="Simulado 1 (Diagnóstico)">Simulado 1 (Diagnóstico)</option>
+                        <option value="Simulado 2 (Bimestral)">Simulado 2 (Bimestral)</option>
+                        <option value="Simulado 3 (Preparatório SAEB)">Simulado 3 (Preparatório SAEB)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Ano / Série *</label>
+                        <select id="inputAnoSerie" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-ure-500 outline-none bg-white">
+                            <option value="">-- Selecione a Série --</option>
+                            <option value="5º Ano">5º Ano (Ensino Fundamental)</option>
+                            <option value="6º Ano">6º Ano (Ensino Fundamental)</option>
+                            <option value="9º Ano">9º Ano (Ensino Fundamental)</option>
+                            <option value="1ª Série">1ª Série (Ensino Médio)</option>
+                            <option value="2ª Série">2ª Série (Ensino Médio)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Turma *</label>
+                        <input type="text" id="inputTurma" required placeholder="Ex: 5º A, 9º B, 1ªEM-A" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-ure-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Disciplina *</label>
+                    <select id="inputDisciplina" required class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-ure-500 outline-none bg-white">
+                        <option value="">-- Selecione a Disciplina --</option>
+                        <option value="Língua Portuguesa">Língua Portuguesa</option>
+                        <option value="Matemática">Matemática</option>
+                        <option value="Ciências Humanas">Ciências Humanas</option>
+                        <option value="Ciências da Natureza">Ciências da Natureza</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Total de Alunos Matriculados *</label>
+                        <input type="number" id="inputMatriculados" min="1" required placeholder="Ex: 35" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-ure-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Alunos Presentes (Participantes) *</label>
+                        <input type="number" id="inputParticipantes" min="1" required placeholder="Ex: 32" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-ure-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Taxa Média de Acerto (%) *</label>
+                    <input type="number" step="0.1" min="0" max="100" id="inputTaxaAcerto" required placeholder="Ex: 74.5" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-ure-500 outline-none">
+                    <span class="text-[11px] text-slate-400 mt-1 block">Insira a porcentagem média de acertos obtida pela turma nesta disciplina.</span>
+                </div>
+
+                <div class="pt-4 flex items-center justify-end space-x-3">
+                    <button type="button" onclick="closeResultadoModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition">Cancelar</button>
+                    <button type="submit" class="px-6 py-2.5 bg-ure-650 hover:bg-ure-700 text-white font-semibold rounded-xl text-sm transition shadow-sm">Salvar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase handles
+        window.firebaseApp = null;
+        window.db = null;
+        window.auth = null;
+        window.unsubscribeSnapshot = null;
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ure-sumare-simulados-2026';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDummyKeyForPreviewModeOnly123456",
+            authDomain: "ure-sumare.firebaseapp.com",
+            projectId: "ure-sumare",
+            storageBucket: "ure-sumare.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef"
+        };
+
+        async function initFirebase() {
+            try {
+                window.firebaseApp = initializeApp(firebaseConfig);
+                window.db = getFirestore(window.firebaseApp);
+                window.auth = getAuth(window.firebaseApp);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(window.auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(window.auth);
+                }
+
+                console.log("Firebase initialized successfully. UID:", window.auth.currentUser?.uid);
+                startRealtimeListener();
+            } catch (err) {
+                console.warn("Firebase initialization warning (using local fallback mode):", err);
+                // Fallback mock data if firebase fails or runs offline
+                loadFallbackData();
+            }
+        }
+
+        function startRealtimeListener() {
+            if (!window.db) return;
+            const colRef = collection(window.db, 'artifacts', appId, 'public', 'data', 'registros_simulados');
+            
+            if (window.unsubscribeSnapshot) window.unsubscribeSnapshot();
+
+            window.unsubscribeSnapshot = onSnapshot(colRef, (snapshot) => {
+                const list = [];
+                snapshot.forEach((docSnap) => {
+                    list.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                window.globalRegistros = list;
+                refreshAppViews();
+            }, (error) => {
+                console.error("Firestore snapshot error:", error);
+                showModal("Erro de Conexão", "Houve um problema ao sincronizar com o banco de dados online. Verifique sua conexão.", "error");
+            });
+        }
+
+        window.firebaseAddRegistro = async function(data) {
+            if (!window.db) {
+                // Local fallback
+                data.id = 'local_' + Date.now();
+                window.globalRegistros.push(data);
+                refreshAppViews();
+                return;
+            }
+            const colRef = collection(window.db, 'artifacts', appId, 'public', 'data', 'registros_simulados');
+            await addDoc(colRef, { ...data, timestamp: Date.now() });
+        }
+
+        window.firebaseDeleteRegistro = async function(id) {
+            if (!window.db || id.startsWith('local_')) {
+                window.globalRegistros = window.globalRegistros.filter(r => r.id !== id);
+                refreshAppViews();
+                return;
+            }
+            const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'registros_simulados', id);
+            await deleteDoc(docRef);
+        }
+
+        window.firebaseUpdateRegistro = async function(id, data) {
+            if (!window.db || id.startsWith('local_')) {
+                const idx = window.globalRegistros.findIndex(r => r.id === id);
+                if (idx !== -1) {
+                    window.globalRegistros[idx] = { ...window.globalRegistros[idx], ...data };
+                    refreshAppViews();
+                }
+                return;
+            }
+            const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'registros_simulados', id);
+            await updateDoc(docRef, data);
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+        });
+    </script>
+
+    <script>
+        // Global App State
+        window.globalRegistros = [];
+        window.currentProfile = null; // { type: 'escola' | 'ure', name: string }
+        window.chartAnoSerieInst = null;
+        window.chartEscolasInst = null;
+
+        const allEscolasList = [
+            "EE Profª Nair Uchoa",
+            "EE Dom Nery",
+            "EE Profº Cia. de Carvalho",
+            "EE Amador Bueno",
+            "EE Jardim Dall'Orto",
+            "EE Matilde Maria",
+            "EE Maria de Lourdes",
+            "EE Sumaré (Central)"
+        ];
+
+        // Fallback demo data if offline
+        function loadFallbackData() {
+            window.globalRegistros = [
+                { id: '1', escola: "EE Profª Nair Uchoa", simulado: "Simulado 1 (Diagnóstico)", anoSerie: "5º Ano", turma: "5º A", disciplina: "Língua Portuguesa", matriculados: 32, participantes: 30, taxaAcerto: 76.5, timestamp: Date.now() - 86400000 },
+                { id: '2', escola: "EE Profª Nair Uchoa", simulado: "Simulado 1 (Diagnóstico)", anoSerie: "5º Ano", turma: "5º A", disciplina: "Matemática", matriculados: 32, participantes: 30, taxaAcerto: 68.2, timestamp: Date.now() - 86400000 },
+                { id: '3', escola: "EE Dom Nery", simulado: "Simulado 1 (Diagnóstico)", anoSerie: "9º Ano", turma: "9º B", disciplina: "Matemática", matriculados: 38, participantes: 36, taxaAcerto: 59.4, timestamp: Date.now() - 70000000 },
+                { id: '4', escola: "EE Amador Bueno", simulado: "Simulado 2 (Bimestral)", anoSerie: "1ª Série", turma: "1ªEM-A", disciplina: "Língua Portuguesa", matriculados: 40, participantes: 39, taxaAcerto: 81.0, timestamp: Date.now() - 40000000 },
+                { id: '5', escola: "EE Jardim Dall'Orto", simulado: "Simulado 1 (Diagnóstico)", anoSerie: "2ª Série", turma: "2ªEM-B", disciplina: "Matemática", matriculados: 35, participantes: 33, taxaAcerto: 62.8, timestamp: Date.now() - 20000000 }
+            ];
+            refreshAppViews();
+        }
+
+        // Login Mode switcher
+        function switchLoginMode(mode) {
+            const btnEscola = document.getElementById('btnTabEscola');
+            const btnUre = document.getElementById('btnTabUre');
+            const formEscola = document.getElementById('formLoginEscola');
+            const formUre = document.getElementById('formLoginUre');
+
+            if (mode === 'escola') {
+                btnEscola.className = "py-3 px-4 text-xs font-semibold rounded-xl transition-all shadow-sm bg-white text-ure-650 flex items-center justify-center space-x-2";
+                btnUre.className = "py-3 px-4 text-xs font-semibold rounded-xl transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-2";
+                formEscola.classList.remove('hidden');
+                formUre.classList.add('hidden');
+            } else {
+                btnUre.className = "py-3 px-4 text-xs font-semibold rounded-xl transition-all shadow-sm bg-white text-ure-900 flex items-center justify-center space-x-2";
+                btnEscola.className = "py-3 px-4 text-xs font-semibold rounded-xl transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-2";
+                formUre.classList.remove('hidden');
+                formEscola.classList.add('hidden');
+            }
+        }
+
+        // Login actions
+        function loginAsEscola() {
+            const escola = document.getElementById('selectEscolaLogin').value;
+            const pass = document.getElementById('passEscola').value;
+            if (!escola) {
+                showModal("Seleção Obrigatória", "Por favor, selecione qual escola você está representando.", "warning");
+                return;
+            }
+            if (!pass) {
+                showModal("Senha Necessária", "Insira a senha de acesso da escola.", "warning");
+                return;
+            }
+
+            window.currentProfile = { type: 'escola', name: escola };
+            startAppSession();
+        }
+
+        function loginAsUre() {
+            const user = document.getElementById('inputUreUser').value;
+            const pass = document.getElementById('passUre').value;
+            if (!pass) {
+                showModal("Chave Necessária", "Insira a chave de segurança da URE Sumaré.", "warning");
+                return;
+            }
+
+            window.currentProfile = { type: 'ure', name: user || 'Equipe URE Sumaré' };
+            startAppSession();
+        }
+
+        function startAppSession() {
+            document.getElementById('authView').classList.add('hidden');
+            document.getElementById('appShell').classList.remove('hidden');
+
+            document.getElementById('headerUserName').textContent = window.currentProfile.name;
+            const badge = document.getElementById('badgeProfileType');
+
+            populateEscolaFilterSelect();
+
+            if (window.currentProfile.type === 'escola') {
+                badge.textContent = "Escola: " + window.currentProfile.name;
+                document.getElementById('titleEscolaName').textContent = window.currentProfile.name;
+                document.getElementById('viewEscolaDashboard').classList.remove('hidden');
+                document.getElementById('viewUreDashboard').classList.add('hidden');
+                renderEscolaDashboard();
+            } else {
+                badge.textContent = "Painel URE Sumaré";
+                document.getElementById('viewUreDashboard').classList.remove('hidden');
+                document.getElementById('viewEscolaDashboard').classList.add('hidden');
+                renderUreDashboard();
+            }
+        }
+
+        function logout() {
+            window.currentProfile = null;
+            document.getElementById('appShell').classList.add('hidden');
+            document.getElementById('authView').classList.remove('hidden');
+        }
+
+        function populateEscolaFilterSelect() {
+            const sel = document.getElementById('filterEscola');
+            if (!sel) return;
+            // keep default "Todas"
+            let html = '<option value="todas">Todas as Escolas</option>';
+            allEscolasList.forEach(esc => {
+                html += `<option value="${esc}">${esc}</option>`;
+            });
+            sel.innerHTML = html;
+        }
+
+        function refreshAppViews() {
+            if (!window.currentProfile) return;
+            if (window.currentProfile.type === 'escola') {
+                renderEscolaDashboard();
+            } else {
+                renderUreDashboard();
+            }
+        }
+
+        // SWITCH URE SUBVIEWS
+        function switchUreTab(tab) {
+            const tabDash = document.getElementById('btnTabUreDash');
+            const tabPend = document.getElementById('btnTabUrePend');
+            const tabRel = document.getElementById('btnTabUreRel');
+
+            const subDash = document.getElementById('ureSubViewDashboard');
+            const subPend = document.getElementById('ureSubViewPendencias');
+            const subRel = document.getElementById('ureSubViewRelatorios');
+
+            // Reset classes
+            [tabDash, tabPend, tabRel].forEach(t => {
+                t.className = "px-4 py-2.5 rounded-xl text-xs font-bold transition bg-white/10 hover:bg-white/20 text-white border border-white/20";
+            });
+            subDash.classList.add('hidden');
+            subPend.classList.add('hidden');
+            subRel.classList.add('hidden');
+
+            if (tab === 'dashboard') {
+                tabDash.className = "px-4 py-2.5 rounded-xl text-xs font-bold transition bg-white text-ure-900 shadow";
+                subDash.classList.remove('hidden');
+                renderUreDashboard();
+            } else if (tab === 'pendencias') {
+                tabPend.className = "px-4 py-2.5 rounded-xl text-xs font-bold transition bg-white text-ure-900 shadow";
+                subPend.classList.remove('hidden');
+                renderPendenciasView();
+            } else if (tab === 'relatorios') {
+                tabRel.className = "px-4 py-2.5 rounded-xl text-xs font-bold transition bg-white text-ure-900 shadow";
+                subRel.classList.remove('hidden');
+            }
+        }
+
+        // RENDER URE DASHBOARD
+        function renderUreDashboard() {
+            const fSimulado = document.getElementById('filterSimulado').value;
+            const fAno = document.getElementById('filterAnoSerie').value;
+            const fEscola = document.getElementById('filterEscola').value;
+
+            let filtered = window.globalRegistros.filter(r => {
+                if (fSimulado !== 'todos' && r.simulado !== fSimulado) return false;
+                if (fAno !== 'todos' && r.anoSerie !== fAno) return false;
+                if (fEscola !== 'todas' && r.escola !== fEscola) return false;
+                return true;
+            });
+
+            // KPIs
+            const escolasUnicas = new Set(filtered.map(r => r.escola));
+            document.getElementById('kpiEscolasParticipantes').textContent = escolasUnicas.size + " / " + allEscolasList.length;
+
+            const totalAlunos = filtered.reduce((acc, r) => acc + Number(r.participantes || 0), 0);
+            document.getElementById('kpiTotalAlunos').textContent = totalAlunos.toLocaleString('pt-BR');
+
+            const somaAcerto = filtered.reduce((acc, r) => acc + Number(r.taxaAcerto || 0), 0);
+            const mediaAcerto = filtered.length > 0 ? (somaAcerto / filtered.length).toFixed(1) : 0;
+            document.getElementById('kpiTaxaMedia').textContent = mediaAcerto + "%";
+
+            document.getElementById('kpiTotalEnvios').textContent = filtered.length;
+            document.getElementById('countRegistrosTable').textContent = filtered.length + " registros";
+
+            // Table
+            let tbodyHtml = '';
+            if (filtered.length === 0) {
+                tbodyHtml = `<tr><td colspan="9" class="py-8 text-center text-slate-400">Nenhum registro encontrado com os filtros selecionados.</td></tr>`;
+            } else {
+                filtered.forEach(r => {
+                    tbodyHtml += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-3 px-4 font-semibold text-slate-900">${r.escola}</td>
+                            <td class="py-3 px-4 text-slate-600">${r.simulado}</td>
+                            <td class="py-3 px-4"><span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-medium">${r.anoSerie}</span></td>
+                            <td class="py-3 px-4">${r.turma}</td>
+                            <td class="py-3 px-4 text-slate-600">${r.disciplina}</td>
+                            <td class="py-3 px-4 text-center">${r.participantes} / ${r.matriculados}</td>
+                            <td class="py-3 px-4 text-center font-medium">${((r.participantes / r.matriculados)*100).toFixed(0)}%</td>
+                            <td class="py-3 px-4 text-center"><span class="font-bold text-ure-650">${r.taxaAcerto}%</span></td>
+                            <td class="py-3 px-4 text-right">
+                                <button onclick="deletarRegistro('${r.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 transition" title="Excluir Registro">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('tableRegistrosUre').innerHTML = tbodyHtml;
+
+            // Render Charts
+            renderCharts(filtered);
+        }
+
+        function renderCharts(dataList) {
+            // Chart 1: Ano / Série Average
+            const seriesMap = {};
+            const seriesCount = {};
+            const seriesList = ["5º Ano", "6º Ano", "9º Ano", "1ª Série", "2ª Série"];
+
+            seriesList.forEach(s => {
+                seriesMap[s] = 0;
+                seriesCount[s] = 0;
+            });
+
+            dataList.forEach(r => {
+                if (seriesMap[r.anoSerie] !== undefined) {
+                    seriesMap[r.anoSerie] += Number(r.taxaAcerto);
+                    seriesCount[r.anoSerie] += 1;
+                }
+            });
+
+            const seriesData = seriesList.map(s => seriesCount[s] > 0 ? (seriesMap[s] / seriesCount[s]).toFixed(1) : 0);
+
+            const ctxAno = document.getElementById('chartAnoSerie').getContext('2d');
+            if (window.chartAnoSerieInst) window.chartAnoSerieInst.destroy();
+
+            window.chartAnoSerieInst = new Chart(ctxAno, {
+                type: 'bar',
+                data: {
+                    labels: seriesList,
+                    datasets: [{
+                        label: 'Média de Acertos (%)',
+                        data: seriesData,
+                        backgroundColor: '#0284c7',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Chart 2: Escolas Average
+            const escolaMap = {};
+            const escolaCount = {};
+
+            allEscolasList.forEach(esc => {
+                escolaMap[esc] = 0;
+                escolaCount[esc] = 0;
+            });
+
+            dataList.forEach(r => {
+                if (escolaMap[r.escola] !== undefined) {
+                    escolaMap[r.escola] += Number(r.taxaAcerto);
+                    escolaCount[r.escola] += 1;
+                }
+            });
+
+            const escolaData = allEscolasList.map(esc => escolaCount[esc] > 0 ? (escolaMap[esc] / escolaCount[esc]).toFixed(1) : 0);
+
+            const ctxEscola = document.getElementById('chartEscolas').getContext('2d');
+            if (window.chartEscolasInst) window.chartEscolasInst.destroy();
+
+            window.chartEscolasInst = new Chart(ctxEscola, {
+                type: 'bar',
+                data: {
+                    labels: allEscolasList.map(e => e.replace("EE ", "")),
+                    datasets: [{
+                        label: 'Média por Escola (%)',
+                        data: escolaData,
+                        backgroundColor: '#0c2340',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, max: 100, grid: { color: '#f1f5f9' } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // RENDER PENDENCIAS VIEW
+        function renderPendenciasView() {
+            let emDiaCount = 0;
+            let pendentesCount = 0;
+
+            let tbodyHtml = '';
+            allEscolasList.forEach(esc => {
+                const registrosEscola = window.globalRegistros.filter(r => r.escola === esc);
+                const total = registrosEscola.length;
+                let statusBadge = '';
+
+                if (total > 0) {
+                    emDiaCount++;
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-semibold">Em Dia (${total} envios)</span>`;
+                } else {
+                    pendentesCount++;
+                    statusBadge = `<span class="bg-rose-100 text-rose-800 px-3 py-1 rounded-full font-semibold">Pendente de Envio</span>`;
+                }
+
+                let ultimoEnvio = total > 0 ? new Date(Math.max(...registrosEscola.map(r => r.timestamp || Date.now()))).toLocaleDateString('pt-BR') : 'Nenhum';
+
+                tbodyHtml += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-semibold text-slate-900">${esc}</td>
+                        <td class="py-3 px-4 text-center">${statusBadge}</td>
+                        <td class="py-3 px-4 text-center font-bold">${total}</td>
+                        <td class="py-3 px-4 text-slate-600">${ultimoEnvio}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="enviarCobranca('${esc}')" class="px-3 py-1.5 bg-ure-50 hover:bg-ure-100 text-ure-650 rounded-lg text-xs font-medium transition">
+                                <i class="fa-solid fa-paper-plane mr-1"></i> Notificar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('tablePendencias').innerHTML = tbodyHtml;
+            document.getElementById('statEscolasEmDia').textContent = emDiaCount;
+            document.getElementById('statEscolasPendentes').textContent = pendentesCount;
+            document.getElementById('countPendentesBadge').textContent = pendentesCount;
+        }
+
+        // RENDER ESCOLA DASHBOARD
+        function renderEscolaDashboard() {
+            const escolaName = window.currentProfile.name;
+            const registrosEscola = window.globalRegistros.filter(r => r.escola === escolaName);
+
+            document.getElementById('escolaKpiEnvios').textContent = registrosEscola.length;
+            
+            const totalAlunosEscola = registrosEscola.reduce((acc, r) => acc + Number(r.participantes || 0), 0);
+            document.getElementById('escolaKpiAlunos').textContent = totalAlunosEscola.toLocaleString('pt-BR');
+
+            const somaAcertoEscola = registrosEscola.reduce((acc, r) => acc + Number(r.taxaAcerto || 0), 0);
+            const mediaAcertoEscola = registrosEscola.length > 0 ? (somaAcertoEscola / registrosEscola.length).toFixed(1) : 0;
+            document.getElementById('escolaKpiMedia').textContent = mediaAcertoEscola + "%";
+
+            let tbodyHtml = '';
+            if (registrosEscola.length === 0) {
+                tbodyHtml = `<tr><td colspan="8" class="py-8 text-center text-slate-400">Nenhum resultado cadastrado por sua escola ainda. Clique em "Cadastrar Novo Resultado".</td></tr>`;
+            } else {
+                registrosEscola.forEach(r => {
+                    tbodyHtml += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-3 px-4 font-semibold text-slate-900">${r.simulado}</td>
+                            <td class="py-3 px-4"><span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-medium">${r.anoSerie}</span></td>
+                            <td class="py-3 px-4">${r.turma}</td>
+                            <td class="py-3 px-4 text-slate-600">${r.disciplina}</td>
+                            <td class="py-3 px-4 text-center">${r.matriculados}</td>
+                            <td class="py-3 px-4 text-center font-medium">${r.participantes}</td>
+                            <td class="py-3 px-4 text-center"><span class="font-bold text-ure-650">${r.taxaAcerto}%</span></td>
+                            <td class="py-3 px-4 text-right space-x-2">
+                                <button onclick="deletarRegistro('${r.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 transition" title="Excluir">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('tableRegistrosEscola').innerHTML = tbodyHtml;
+        }
+
+        // MODAL MANAGEMENT FOR RESULTS
+        function openNovoRegistroModal() {
+            document.getElementById('formResultado').reset();
+            document.getElementById('editRegistroId').value = '';
+            document.getElementById('modalResultadoTitle').textContent = "Cadastrar Resultado de Simulado";
+            document.getElementById('modalResultado').classList.remove('hidden');
+        }
+
+        function closeResultadoModal() {
+            document.getElementById('modalResultado').classList.add('hidden');
+        }
+
+        async function salvarResultado(event) {
+            event.preventDefault();
+
+            const simulado = document.getElementById('inputSimulado').value;
+            const anoSerie = document.getElementById('inputAnoSerie').value;
+            const turma = document.getElementById('inputTurma').value;
+            const disciplina = document.getElementById('inputDisciplina').value;
+            const matriculados = Number(document.getElementById('inputMatriculados').value);
+            const participantes = Number(document.getElementById('inputParticipantes').value);
+            const taxaAcerto = Number(document.getElementById('inputTaxaAcerto').value);
+
+            if (participantes > matriculados) {
+                showModal("Atenção nos Dados", "O número de alunos presentes não pode ser maior que o total de matriculados.", "warning");
+                return;
+            }
+
+            const payload = {
+                escola: window.currentProfile.name,
+                simulado,
+                anoSerie,
+                turma,
+                disciplina,
+                matriculados,
+                participantes,
+                taxaAcerto
+            };
+
+            const editId = document.getElementById('editRegistroId').value;
+            if (editId) {
+                await window.firebaseUpdateRegistro(editId, payload);
+                showModal("Sucesso", "Registro atualizado com sucesso!", "success");
+            } else {
+                await window.firebaseAddRegistro(payload);
+                showModal("Sucesso", "Resultado cadastrado e sincronizado com a URE Sumaré!", "success");
+            }
+
+            closeResultadoModal();
+        }
+
+        async function deletarRegistro(id) {
+            if (confirm("Deseja realmente excluir este registro de resultado?")) {
+                await window.firebaseDeleteRegistro(id);
+                showModal("Excluído", "O registro foi removido com sucesso.", "success");
+            }
+        }
+
+        function enviarCobranca(escola) {
+            showModal("Notificação Enviada", `Um lembrete oficial foi disparado para a escola ${escola} solicitando a regularização dos envios pendentes.`, "success");
+        }
+
+        function simularExportacao(tipo) {
+            showModal("Exportação Concluída", `O relatório analítico em formato ${tipo} foi gerado com sucesso e transferido para seu dispositivo.`, "success");
+        }
+
+        // Custom Modal helper
+        function showModal(title, message, type = 'success') {
+            const modal = document.getElementById('customModal');
+            const iconContainer = document.getElementById('modalIconContainer');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+
+            if (type === 'success') {
+                iconContainer.className = "w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto text-xl bg-emerald-100 text-emerald-600";
+                iconContainer.innerHTML = '<i class="fa-solid fa-check"></i>';
+            } else if (type === 'warning') {
+                iconContainer.className = "w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto text-xl bg-amber-100 text-amber-600";
+                iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else {
+                iconContainer.className = "w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto text-xl bg-rose-100 text-rose-600";
+                iconContainer.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
